@@ -3,7 +3,15 @@ node_modules/
 
 # Build output
 dist/
-bin/
+
+# Native binaries (keep the launcher scripts)
+bin/agent-browser-*
+!bin/agent-browser
+!bin/agent-browser.cmd
+
+# Rust build artifacts
+cli/target/
+cli/*.o
 
 # Logs
 *.log

@@ -1,0 +1,47 @@
+#!/bin/sh
+# Cross-platform launcher for agent-browser
+# Detects OS/arch and runs the appropriate native binary
+
+# Get the directory where this script lives
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Detect platform
+OS="$(uname -s)"
+ARCH="$(uname -m)"
+
+case "$OS" in
+  Linux)  PLATFORM="linux" ;;
+  Darwin) PLATFORM="darwin" ;;
+  MINGW*|MSYS*|CYGWIN*) PLATFORM="win32" ;;
+  *) PLATFORM="unknown" ;;
+esac
+
+case "$ARCH" in
+  x86_64|amd64) ARCH="x64" ;;
+  aarch64|arm64) ARCH="arm64" ;;
+  *) ARCH="unknown" ;;
+esac
+
+# Build binary name
+if [ "$PLATFORM" = "win32" ]; then
+  BINARY="agent-browser-${PLATFORM}-${ARCH}.exe"
+else
+  BINARY="agent-browser-${PLATFORM}-${ARCH}"
+fi
+
+BINARY_PATH="$SCRIPT_DIR/$BINARY"
+
+# Try native binary first
+if [ -x "$BINARY_PATH" ]; then
+  exec "$BINARY_PATH" "$@"
+fi
+
+# Fallback to Node.js implementation
+NODE_CLI="$SCRIPT_DIR/../dist/cli-light.js"
+if [ -f "$NODE_CLI" ]; then
+  exec node "$NODE_CLI" "$@"
+fi
+
+echo "Error: No binary found for $PLATFORM-$ARCH" >&2
+echo "Run 'npm run build:native' or 'npm run build:all-platforms' to build" >&2
+exit 1

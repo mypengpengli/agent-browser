@@ -1,0 +1,68 @@
+# Docker Compose for building agent-browser
+# Usage: docker compose -f docker/docker-compose.yml run build-all
+#
+# Note: Windows is skipped because the Rust CLI uses Unix sockets.
+# Windows users will use the Node.js fallback automatically.
+
+services:
+  # Build for all Unix platforms
+  build-all:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.build
+    volumes:
+      - ../cli:/build
+      - ../bin:/output
+    command: |
+      -c '
+        set -e
+        echo "Building for all platforms..."
+        
+        # Linux x64
+        echo "→ Linux x64"
+        cargo zigbuild --release --target x86_64-unknown-linux-gnu
+        cp /build/target/x86_64-unknown-linux-gnu/release/agent-browser /output/agent-browser-linux-x64
+        chmod +x /output/agent-browser-linux-x64
+        
+        # Linux ARM64
+        echo "→ Linux ARM64"
+        cargo zigbuild --release --target aarch64-unknown-linux-gnu
+        cp /build/target/aarch64-unknown-linux-gnu/release/agent-browser /output/agent-browser-linux-arm64
+        chmod +x /output/agent-browser-linux-arm64
+        
+        # macOS x64
+        echo "→ macOS x64"
+        cargo zigbuild --release --target x86_64-apple-darwin
+        cp /build/target/x86_64-apple-darwin/release/agent-browser /output/agent-browser-darwin-x64
+        chmod +x /output/agent-browser-darwin-x64
+        
+        # macOS ARM64
+        echo "→ macOS ARM64"
+        cargo zigbuild --release --target aarch64-apple-darwin
+        cp /build/target/aarch64-apple-darwin/release/agent-browser /output/agent-browser-darwin-arm64
+        chmod +x /output/agent-browser-darwin-arm64
+        
+        echo ""
+        echo "✓ All platforms built successfully!"
+        echo "(Windows uses Node.js fallback - Unix sockets not supported)"
+        ls -la /output/agent-browser-*
+      '
+
+  # Build for a single target (override with TARGET env var)
+  build-single:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.build
+    volumes:
+      - ../cli:/build
+      - ../bin:/output
+    environment:
+      - TARGET=${TARGET:-x86_64-unknown-linux-gnu}
+      - OUTPUT_NAME=${OUTPUT_NAME:-agent-browser-linux-x64}
+    command: |
+      -c '
+        cargo zigbuild --release --target $TARGET
+        cp /build/target/$TARGET/release/agent-browser* /output/$OUTPUT_NAME
+        chmod +x /output/$OUTPUT_NAME 2>/dev/null || true
+        echo "✓ Built $OUTPUT_NAME"
+      '

@@ -1,6 +1,6 @@
 {
   "name": "agent-browser",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Headless browser automation CLI for AI agents",
   "type": "module",
   "main": "dist/index.js",
@@ -8,9 +8,10 @@
     "agent-browser": "./bin/agent-browser"
   },
   "scripts": {
-    "build": "tsc && cargo build --release --manifest-path cli/Cargo.toml && cp cli/target/release/agent-browser bin/agent-browser",
-    "build:ts": "tsc",
-    "build:rust": "cargo build --release --manifest-path cli/Cargo.toml && cp cli/target/release/agent-browser bin/agent-browser",
+    "build": "tsc",
+    "build:native": "cargo build --release --manifest-path cli/Cargo.toml && node scripts/copy-native.js",
+    "build:all-platforms": "docker compose -f docker/docker-compose.yml run --rm build-all",
+    "build:docker": "docker build -t agent-browser-builder -f docker/Dockerfile.build .",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
